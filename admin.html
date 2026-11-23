@@ -79,6 +79,13 @@
     </div>
     <p id="pratinjau" class="muted"></p>
     <button class="primary" id="impor" disabled>Impor ke kelas ini</button>
+    <h2 style="margin-top:24px">Tambah mahasiswa manual</h2>
+    <p class="muted">Untuk mahasiswa yang baru bergabung. Password awal = 4 digit terakhir NIM.</p>
+    <form id="form-manual" class="row">
+      <div><label>NIM</label><input name="nim" inputmode="numeric" pattern="[0-9]{4,}" required placeholder="mis. 103022500013"></div>
+      <div><label>Nama</label><input name="nama" required></div>
+      <button class="primary">Tambah ke kelas ini</button>
+    </form>
     <h2 style="margin-top:24px">Peserta kelas (<span id="jml-peserta">0</span>)</h2>
     <div class="scroll"><table id="tabel-peserta"></table></div>
   </section>

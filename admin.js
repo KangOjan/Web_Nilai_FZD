@@ -279,6 +279,20 @@ $("impor").addEventListener("click", async () => {
   await muatIsiKelas();
 });
 
+$("form-manual").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!S.kelasId) return toast("Pilih kelas dulu.", true);
+  const nim = e.target.nim.value.replace(/\D/g, ""), nama = e.target.nama.value.trim();
+  if (nim.length < 4) return toast("NIM tidak valid.", true);
+  const btn = e.submitter; btn.disabled = true;
+  try {
+    cek(await sb.rpc("admin_impor_peserta", { p_kelas: S.kelasId, p_rows: [{ nim, nama }] }));
+    toast(`${nama} ditambahkan. Password awal: ${nim.slice(-4)}`);
+    e.target.reset();
+  } finally { btn.disabled = false; }
+  await muatIsiKelas();
+});
+
 function renderPeserta() {
   $("jml-peserta").textContent = S.peserta.length;
   $("tabel-peserta").replaceChildren(
