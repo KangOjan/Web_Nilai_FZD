@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Nilai</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Admin Nilai</h1>
+  <span class="muted" id="nama-admin"></span>
+  <button onclick="keluar()">Keluar</button>
+</header>
+<main>
+  <div class="card">
+    <div class="row">
+      <div><label for="pilih-kelas">Kelas & mata kuliah</label><select id="pilih-kelas"></select></div>
+      <button class="danger" id="hapus-kelas">Hapus kelas ini</button>
+    </div>
+    <details style="margin-top:12px">
+      <summary>Tambah kelas baru</summary>
+      <form id="form-kelas" class="row" style="margin-top:8px">
+        <div><label>Kode MK</label><input name="kode_mk"></div>
+        <div><label>Nama MK</label><input name="nama_mk" required></div>
+        <div><label>Kelas</label><input name="nama_kelas" required placeholder="mis. SE-01"></div>
+        <div><label>Semester</label><input name="semester" value="2026/2027 Gasal"></div>
+        <button class="primary">Tambah</button>
+      </form>
+    </details>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button data-tab="nilai" aria-selected="true">Nilai</button>
+    <button data-tab="asesmen">Asesmen & bobot</button>
+    <button data-tab="peserta">Peserta</button>
+    <button data-tab="indeks">Rentang indeks</button>
+  </div>
+
+  <!-- NILAI -->
+  <section id="tab-nilai" class="card">
+    <h2>Nilai</h2>
+    <div class="row" style="margin-bottom:12px">
+      <div><label for="cari">Cari nama / NIM</label><input id="cari" placeholder="ketik untuk menyaring"></div>
+      <button class="primary" id="simpan-nilai" disabled>Simpan perubahan</button>
+    </div>
+    <p class="muted" id="info-nilai"></p>
+    <div class="scroll"><table id="tabel-nilai"></table></div>
+  </section>
+
+  <!-- ASESMEN -->
+  <section id="tab-asesmen" class="card hidden">
+    <h2>Kategori & bobot</h2>
+    <p class="muted">Bobot kategori berlaku untuk <b>setiap</b> asesmen di dalamnya (mis. Kuis 5% → tiap kuis 5%). Bobot asesmen bisa diisi khusus untuk mengganti bobot kategorinya.</p>
+    <p>Total bobot: <span class="chip" id="total-bobot">0%</span></p>
+    <div class="scroll"><table id="tabel-kategori"></table></div>
+    <form id="form-kategori" class="row" style="margin-top:12px">
+      <div><label>Kategori baru</label><input name="nama" required placeholder="mis. Kuis"></div>
+      <div><label>Bobot per asesmen (%)</label><input name="bobot" type="number" step="0.01" min="0" max="100" required></div>
+      <button class="primary">Tambah kategori</button>
+    </form>
+    <h2 style="margin-top:24px">Asesmen</h2>
+    <div class="scroll"><table id="tabel-asesmen"></table></div>
+    <form id="form-asesmen" class="row" style="margin-top:12px">
+      <div><label>Kategori</label><select name="kategori_id" id="sel-kategori" required></select></div>
+      <div><label>Nama asesmen</label><input name="nama" required placeholder="mis. Kuis"></div>
+      <div><label>Jumlah</label><input name="jumlah" type="number" min="1" max="30" value="1"></div>
+      <button class="primary">Tambah asesmen</button>
+    </form>
+    <p class="muted" style="font-size:13px">Jumlah &gt; 1 membuat nama bernomor otomatis, mis. "Kuis 1", "Kuis 2", …</p>
+  </section>
+
+  <!-- PESERTA -->
+  <section id="tab-peserta" class="card hidden">
+    <h2>Impor mahasiswa dari Excel</h2>
+    <p class="muted">File harus punya kolom <b>NIM</b> dan <b>Nama</b>. Akun dibuat otomatis: username NIM, password awal 4 digit terakhir NIM.</p>
+    <div class="row">
+      <div><label for="file-excel">File Excel (.xlsx / .xls / .csv)</label><input id="file-excel" type="file" accept=".xlsx,.xls,.csv"></div>
+      <div><label for="sheet">Sheet</label><select id="sheet"></select></div>
+    </div>
+    <p id="pratinjau" class="muted"></p>
+    <button class="primary" id="impor" disabled>Impor ke kelas ini</button>
+    <h2 style="margin-top:24px">Peserta kelas (<span id="jml-peserta">0</span>)</h2>
+    <div class="scroll"><table id="tabel-peserta"></table></div>
+  </section>
+
+  <!-- INDEKS -->
+  <section id="tab-indeks" class="card hidden">
+    <h2>Rentang indeks (semua MK)</h2>
+    <p class="muted">Indeks diberikan jika nilai akhir ≥ batas bawah.</p>
+    <table id="tabel-indeks" style="max-width:320px"></table>
+    <button class="primary" id="simpan-indeks" style="margin-top:12px">Simpan rentang</button>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

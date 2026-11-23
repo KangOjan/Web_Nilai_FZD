@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nilai Mahasiswa</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="center">
+  <div class="card" id="form-login">
+    <h2>Masuk</h2>
+    <form id="login">
+      <label for="u">NIM (mahasiswa) atau email (admin)</label>
+      <input id="u" autocomplete="username" required>
+      <label for="p">Password</label>
+      <input id="p" type="password" autocomplete="current-password" required>
+      <p class="muted" style="font-size:13px">Login pertama: password = 4 digit terakhir NIM.</p>
+      <button class="primary" style="width:100%">Masuk</button>
+    </form>
+  </div>
+  <div class="card hidden" id="form-ganti">
+    <h2>Ganti password</h2>
+    <p class="muted">Demi keamanan, buat password baru sebelum melihat nilai.</p>
+    <form id="ganti">
+      <label for="p1">Password baru (min. 6 karakter)</label>
+      <input id="p1" type="password" minlength="6" autocomplete="new-password" required>
+      <label for="p2">Ulangi password baru</label>
+      <input id="p2" type="password" minlength="6" autocomplete="new-password" required>
+      <button class="primary" style="width:100%;margin-top:12px">Simpan password</button>
+    </form>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+async function lanjut() {
+  const p = await profilSaya();
+  if (!p) return;
+  if (p.wajib_ganti_password) {
+    document.getElementById("form-login").classList.add("hidden");
+    document.getElementById("form-ganti").classList.remove("hidden");
+    return;
+  }
+  location.href = p.role === "admin" ? "admin.html" : "mahasiswa.html";
+}
+
+document.getElementById("login").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = e.submitter; btn.disabled = true;
+  const { error } = await sb.auth.signInWithPassword({
+    email: loginKeEmail(document.getElementById("u").value),
+    password: document.getElementById("p").value,
+  });
+  btn.disabled = false;
+  if (error) return toast("NIM/email atau password salah.", true);
+  lanjut();
+});
+
+document.getElementById("ganti").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const p1 = document.getElementById("p1").value, p2 = document.getElementById("p2").value;
+  if (p1 !== p2) return toast("Password tidak sama.", true);
+  const btn = e.submitter; btn.disabled = true;
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  if (error) { btn.disabled = false; return toast(error.message, true); }
+  await sb.rpc("selesai_ganti_password");
+  toast("Password tersimpan.");
+  lanjut();
+});
+
+lanjut();
+</script>
+</body>
+</html>

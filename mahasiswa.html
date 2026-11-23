@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nilai Saya</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Nilai Saya</h1>
+  <span class="muted" id="identitas"></span>
+  <button onclick="keluar()">Keluar</button>
+</header>
+<main id="isi"><p class="muted">Memuat…</p></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+(async () => {
+  const me = await wajibLogin("mahasiswa");
+  document.getElementById("identitas").textContent = `${me.nama} · ${me.nim}`;
+  // RLS memastikan hanya data milik mahasiswa ini yang terbaca.
+  const [kelas, kategori, asesmen, nilai, rekap, rentang] = await Promise.all([
+    sb.from("kelas").select("*").order("semester", { ascending: false }).order("nama_mk"),
+    sb.from("kategori").select("*").order("urutan"),
+    sb.from("asesmen").select("*").order("urutan"),
+    sb.from("nilai").select("asesmen_id, skor, updated_at").eq("mahasiswa_id", me.id),
+    sb.from("rekap_nilai").select("*").eq("mahasiswa_id", me.id),
+    sb.from("indeks_rentang").select("*"),
+  ]).then((rs) => rs.map(cek));
+
+  const kb = Object.fromEntries(kategori.map((k) => [k.id, k]));
+  const skor = Object.fromEntries(nilai.map((n) => [n.asesmen_id, n]));
+  const rk = Object.fromEntries(rekap.map((r) => [r.kelas_id, r]));
+  const posKat = Object.fromEntries(kategori.map((k, i) => [k.id, i]));
+  const isi = document.getElementById("isi");
+
+  if (!kelas.length) { isi.replaceChildren(el("div", { class: "card" }, "Anda belum terdaftar di kelas mana pun.")); return; }
+
+  isi.replaceChildren(...kelas.map((k) => {
+    const list = asesmen.filter((a) => a.kelas_id === k.id).sort((a, b) =>
+      (posKat[a.kategori_id] - posKat[b.kategori_id]) || (a.urutan - b.urutan) || a.nama.localeCompare(b.nama, "id", { numeric: true }));
+    const r = rk[k.id];
+    const akhir = r ? Number(r.nilai_akhir) : 0;
+    const terakhir = list.map((a) => skor[a.id]?.updated_at).filter(Boolean).sort().pop();
+    return el("section", { class: "card" },
+      el("h2", {}, `${k.nama_mk} – ${k.nama_kelas}`),
+      el("p", { class: "muted", style: "margin-top:-8px" }, [k.kode_mk, k.semester].filter(Boolean).join(" · ")),
+      el("div", { class: "row", style: "margin:8px 0 16px" },
+        el("div", {}, el("div", { class: "muted" }, "Nilai akhir"), el("div", { class: "big" }, fmt(akhir))),
+        el("div", {}, el("div", { class: "muted" }, "Indeks"), el("div", { class: "big" }, r?.indeks || indeksDari(akhir, rentang)))),
+      list.length ? el("div", { class: "scroll" }, el("table", {},
+        el("thead", {}, el("tr", {}, el("th", {}, "Asesmen"), el("th", {}, "Kategori"),
+          el("th", { class: "num" }, "Nilai"), el("th", { class: "num" }, "Bobot"), el("th", { class: "num" }, "Kontribusi"))),
+        el("tbody", {}, list.map((a) => {
+          const b = bobotAsesmen(a, kb), s = skor[a.id]?.skor;
+          return el("tr", {}, el("td", {}, a.nama), el("td", { class: "muted" }, kb[a.kategori_id]?.nama || ""),
+            el("td", { class: "num" }, s == null ? "–" : fmt(s)), el("td", { class: "num" }, fmt(b) + "%"),
+            el("td", { class: "num" }, fmt((Number(s) || 0) * b / 100)));
+        })))) : el("p", { class: "muted" }, "Belum ada asesmen."),
+      terakhir ? el("p", { class: "muted", style: "font-size:13px" },
+        "Terakhir diperbarui " + new Date(terakhir).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })) : null,
+      el("p", { class: "muted", style: "font-size:13px" }, "Nilai yang belum diisi dihitung 0 dalam nilai akhir."));
+  }));
+})();
+</script>
+</body>
+</html>
